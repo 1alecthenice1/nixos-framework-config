@@ -1,6 +1,67 @@
 # NixOS Framework Configuration
 
-Basic NixOS configuration for Framework Laptop   sudo nixos-install --flake .#framework
+Basic NixOS configuration for Framework Laptop   sudo## Installation with Encryption
+
+⚠️ **CRITICAL**: Follow this EXACT sequence to avoid PCR 7 conflicts that will prevent booting!
+
+### Step 1: Boot and Install
+1. **Boot from NixOS installer ISO**
+   ```bash
+   # The ISO has Secure Boot disabled - this is correct for installation
+   ```
+
+2. **Partition your disk with disko:**
+   ```bash
+   sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko/framework-luks-btrfs.nix
+   ```
+
+3. **Install NixOS:**
+   ```bash
+   sudo nixos-install --flake .#framework
+   ```
+
+### Step 2: Reboot to Installed System
+```bash
+sudo reboot
+# Boot into the newly installed system (NOT the ISO)
+```
+
+### Step 3: Setup Secure Boot Infrastructure
+```bash
+# Run the automated Secure Boot setup script
+sudo ./scripts/setup-secureboot.sh
+```
+
+This script will:
+- Create Secure Boot keys
+- Enroll keys (including Microsoft compatibility keys)
+- Rebuild the system with Secure Boot support
+- Prepare for BIOS activation
+
+### Step 4: Enable Secure Boot in BIOS
+```bash
+sudo reboot
+```
+1. **Enter BIOS/UEFI** (usually F2 during startup)
+2. **Navigate to Security settings**
+3. **Enable Secure Boot**
+4. **Save and exit**
+
+### Step 5: Verify and Enroll TPM
+```bash
+# Verify Secure Boot is active
+sudo sbctl status
+
+# Now enroll TPM with correct PCR 7 values
+sudo ./scripts/tpm-enroll.sh
+```
+
+### Step 6: Test TPM Unlock
+```bash
+sudo reboot
+# System should unlock automatically with TPM
+# If not, use your LUKS password and check the logs
+```--flake .#framework
    ```
 4. **Reboot and setup Secure Boot:**
    ```bash
@@ -11,12 +72,34 @@ Basic NixOS configuration for Framework Laptop   sudo nixos-install --flake .#fr
    sudo ./scripts/tpm-enroll.sh
    ```
 
-## Security Notes
+## Security Notes & Warnings
 
-- ⚠️ **Always keep your LUKS password** - TPM can fail
-- 🔄 **Enable Secure Boot BEFORE TPM enrollment** - critical for PCR 7 values
-- 💾 **Backup LUKS headers** before major changes
-- 🛡️ **Follow the exact sequence** - installation → Secure Boot → TPM enrollmentseries.
+### ⚠️ CRITICAL SEQUENCE REQUIREMENTS
+- **NEVER enroll TPM from the live ISO** - PCR 7 values will be wrong
+- **NEVER enroll TPM before enabling Secure Boot** - PCR 7 values will change
+- **ALWAYS follow the exact 6-step sequence above** - skipping steps breaks boot
+- **Enable Secure Boot in BIOS BEFORE TPM enrollment** - final PCR 7 values needed
+
+### 🔐 Security Best Practices
+- **Always keep your LUKS password** - TPM can fail during updates or hardware changes
+- **Test TPM unlock after enrollment** - verify it works before relying on it
+- **Backup LUKS headers before major changes** - allows recovery if TPM fails
+- **Understand the 3-stage boot process** - ISO → Installed → Secure Boot enabled
+
+### �️ Troubleshooting
+- **System won't boot after TPM enrollment**: Use LUKS password, re-enroll TPM
+- **TPM enrollment fails**: Check Secure Boot status with `sudo sbctl status`  
+- **Secure Boot shows disabled**: Re-run setup-secureboot.sh and enable in BIOS
+- **Boot takes long time**: Normal during first boot with new keys
+
+### 📚 Why This Sequence Matters
+The **PCR 7 register** contains measurements of the boot process. Different boot states create different PCR 7 values:
+
+1. **ISO boot**: PCR 7 = ISO certificates (temporary)
+2. **Installed system without Secure Boot**: PCR 7 = lanzaboote without Secure Boot 
+3. **Installed system with Secure Boot**: PCR 7 = lanzaboote + Secure Boot (final)
+
+TPM will **only unlock** if current PCR 7 matches enrollment PCR 7. Enrolling in wrong state = **system won't boot**.series.
 
 ## Status: Production Ready! 🚀
 
