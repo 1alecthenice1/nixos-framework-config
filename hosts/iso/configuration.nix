@@ -3,10 +3,10 @@
     # Include the ISO image module
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
     
-    # Add our custom modules
+    # Add our custom modules (excluding TPM for ISO)
     ../../modules/security
     ../../modules/users
-    ../../modules/tpm
+    # Skip TPM module for ISO - PCR values will be different
     ../../modules/desktop
     ../../modules/networking
     ../../modules/hardware
@@ -94,13 +94,13 @@
   services.openssh = {
     enable = true;
     settings = {
-      PermitRootLogin = "yes";
-      PasswordAuthentication = true;
+      PermitRootLogin = lib.mkForce "yes";
+      PasswordAuthentication = lib.mkForce true;
     };
   };
 
   # Set root password for SSH access
-  users.users.root.password = "nixos";
+  users.users.root.password = lib.mkForce "nixos";
   
   # Add installer user
   users.users.installer = {
@@ -118,7 +118,7 @@
   networking.wireless.enable = false;  # Disable wpa_supplicant
 
   # Enable audio for desktop environment
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -132,10 +132,10 @@
     enable = true;
     displayManager.lightdm.enable = true;
     desktopManager.xfce.enable = true;
-    
-    # Framework touchpad support
-    libinput.enable = true;
   };
+
+  # Enable libinput for touchpad support
+  services.libinput.enable = true;
 
   # Auto-login to desktop
   services.displayManager.autoLogin = {
@@ -185,8 +185,16 @@
       echo "   cd /nixos-config"
       echo "   sudo nixos-install --flake .#framework"
       echo ""
-      echo "4. After reboot, enroll TPM:"
-      echo "   sudo /nixos-config/scripts/tpm-enroll.sh"
+      echo "4. ⚠️  IMPORTANT: Reboot into the installed system FIRST"
+      echo "   sudo reboot"
+      echo ""
+      echo "5. AFTER reboot, enroll TPM (from the installed system):"
+      echo "   sudo /etc/nixos/scripts/tpm-enroll.sh"
+      echo ""
+      echo "🔐 TPM Notes:"
+      echo "   - TPM enrollment MUST be done from the installed system"
+      echo "   - PCR values differ between ISO and installed system"
+      echo "   - DO NOT enroll TPM from the live ISO"
       echo ""
       echo "📖 Full instructions: /nixos-config/deployment-instructions.md"
       echo ""

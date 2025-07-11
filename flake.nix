@@ -56,12 +56,13 @@
         
         framework-iso = nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit hyprland; };
           modules = [
             nixos-hardware.nixosModules.framework-13-7040-amd
             ./hosts/iso/configuration.nix
             ./modules/security
             ./modules/users
-            ./modules/tpm
+            # Skip TPM module for ISO - PCR values differ from installed system
             ./modules/desktop
             ./modules/networking
             ./modules/hardware

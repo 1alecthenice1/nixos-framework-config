@@ -1,4 +1,19 @@
-# Framework NixOS Deployment Instructions
+# Framework NixOS Deployment Inst## Step 6: Reboot FIRST, Then Configure TPM
+⚠️ **CRITICAL**: Reboot into the installed system before TPM enrollment!
+
+```bash
+sudo reboot
+```
+
+After the system boots from the installed NixOS (not the installer):
+```bash
+sudo /etc/nixos/scripts/tpm-enroll.sh
+```
+
+**Why this matters:**
+- TPM PCR values must match the final boot environment
+- ISO/installer has different PCR 7 values than installed system
+- Enrolling from wrong environment will prevent bootons
 
 ## Prerequisites
 - Framework Laptop 13 AMD 7040 series

@@ -12,6 +12,28 @@ fi
 
 echo "🔐 TPM LUKS Enrollment"
 echo "====================="
+echo ""
+echo "⚠️  CRITICAL: This script must be run from the INSTALLED system"
+echo "   - Do NOT run from live ISO or installer"
+echo "   - PCR values must match the final boot environment"
+echo "   - System must be fully booted and operational"
+echo ""
+
+# Check if running from installed system
+if [[ -f /etc/NIXOS_LUSTRATE ]]; then
+    echo "❌ Detected installer environment!"
+    echo "   Please reboot into the installed system first"
+    exit 1
+fi
+
+# Verify we're in a proper NixOS installation
+if [[ ! -f /etc/nixos/configuration.nix && ! -f /etc/nixos/flake.nix ]]; then
+    echo "❌ This doesn't appear to be a proper NixOS installation"
+    echo "   Please run from the installed NixOS system"
+    exit 1
+fi
+
+echo "✅ Running from installed system"
 
 # Find LUKS device
 LUKS_DEVICE=$(findmnt -n -o SOURCE / | xargs lsblk -no pkname | head -1)
