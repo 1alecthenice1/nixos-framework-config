@@ -15,6 +15,7 @@ echo "====================="
 echo ""
 echo "⚠️  CRITICAL: This script must be run from the INSTALLED system"
 echo "   - Do NOT run from live ISO or installer"
+echo "   - Secure Boot MUST be enabled before running this script"
 echo "   - PCR values must match the final boot environment"
 echo "   - System must be fully booted and operational"
 echo ""
@@ -34,6 +35,45 @@ if [[ ! -f /etc/nixos/configuration.nix && ! -f /etc/nixos/flake.nix ]]; then
 fi
 
 echo "✅ Running from installed system"
+
+# Check Secure Boot status
+if command -v sbctl >/dev/null 2>&1; then
+    SECBOOT_STATUS=$(sbctl status 2>/dev/null | grep "Secure Boot" | awk '{print $3}' || echo "unknown")
+    if [[ "$SECBOOT_STATUS" != "Enabled" ]]; then
+        echo "❌ Secure Boot is not enabled!"
+        echo ""
+        echo "🔧 To enable Secure Boot:"
+        echo "1. Create and enroll keys:"
+        echo "   sudo sbctl create-keys"
+        echo "   sudo sbctl enroll-keys --microsoft"
+        echo "2. Rebuild system:"
+        echo "   sudo nixos-rebuild switch"
+        echo "3. Reboot and enable Secure Boot in BIOS/UEFI"
+        echo "4. Run this script again after Secure Boot is enabled"
+        echo ""
+        echo "⚠️  TPM enrollment with Secure Boot disabled will create incorrect PCR 7 values!"
+        echo "   The system may not boot properly after enabling Secure Boot later."
+        echo ""
+        read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Aborted. Please enable Secure Boot first."
+            exit 1
+        fi
+        echo "⚠️  WARNING: Proceeding with Secure Boot disabled - PCR 7 values may be incorrect!"
+    else
+        echo "✅ Secure Boot is enabled - PCR 7 values will be correct"
+    fi
+else
+    echo "⚠️  WARNING: sbctl not found - cannot verify Secure Boot status"
+    echo "   Ensure Secure Boot is enabled in BIOS before proceeding"
+    read -p "Continue? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
 
 # Find LUKS device
 LUKS_DEVICE=$(findmnt -n -o SOURCE / | xargs lsblk -no pkname | head -1)

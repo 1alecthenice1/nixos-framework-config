@@ -1,6 +1,22 @@
 # NixOS Framework Configuration
 
-Basic NixOS configuration for Framework Laptop 13 AMD 7040 series.
+Basic NixOS configuration for Framework Laptop   sudo nixos-install --flake .#framework
+   ```
+4. **Reboot and setup Secure Boot:**
+   ```bash
+   sudo reboot
+   # After reboot:
+   sudo ./scripts/setup-secureboot.sh
+   # Enable Secure Boot in BIOS, then:
+   sudo ./scripts/tpm-enroll.sh
+   ```
+
+## Security Notes
+
+- ⚠️ **Always keep your LUKS password** - TPM can fail
+- 🔄 **Enable Secure Boot BEFORE TPM enrollment** - critical for PCR 7 values
+- 💾 **Backup LUKS headers** before major changes
+- 🛡️ **Follow the exact sequence** - installation → Secure Boot → TPM enrollmentseries.
 
 ## Status: Production Ready! 🚀
 

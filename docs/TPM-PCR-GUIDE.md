@@ -18,17 +18,26 @@ Platform Configuration Registers (PCRs) are secure storage locations in the TPM 
 - **PCR 7**: Secure Boot Policy (critical for our setup)
 - **PCR 8-15**: Used by operating systems
 
-## PCR 7 and Secure Boot
+## PCR 7 States Throughout Installation
 
-PCR 7 contains measurements of:
-- Secure Boot state
-- Secure Boot policy 
-- Boot certificates and signatures
-- UEFI variables related to Secure Boot
+**🔐 Understanding the three different PCR 7 states:**
 
-**Critical Issue**: PCR 7 values are DIFFERENT between:
-- ✅ **Live ISO environment** (temporary, installer certificates)
-- ✅ **Installed system** (permanent, lanzaboote certificates)
+### State 1: Live ISO Environment
+- **Secure Boot**: Disabled or using ISO certificates
+- **PCR 7 Value**: Reflects ISO/installer boot chain
+- **Status**: Temporary, installation environment only
+
+### State 2: Installed System (Secure Boot Disabled)
+- **Secure Boot**: Disabled (lanzaboote installed but not active)
+- **PCR 7 Value**: Reflects lanzaboote without Secure Boot enforcement
+- **Status**: Intermediate state, not production-ready
+
+### State 3: Installed System (Secure Boot Enabled) 
+- **Secure Boot**: Enabled with enrolled keys
+- **PCR 7 Value**: Reflects full lanzaboote + Secure Boot chain
+- **Status**: Final production state
+
+**⚠️ CRITICAL**: TPM enrollment must happen in State 3 only!
 
 ## Why This Matters for TPM LUKS
 
@@ -48,10 +57,13 @@ When we enroll TPM for LUKS unlocking:
 - **Detection scripts** to prevent enrollment from wrong environment
 
 ### Installation Process
-1. **Boot from ISO** (PCR 7 = ISO certificates)
-2. **Install NixOS** with lanzaboote + TPM modules
-3. **Reboot** into installed system (PCR 7 = lanzaboote certificates)
-4. **Enroll TPM** from installed system (correct PCR 7 values)
+1. **Boot from ISO** (PCR 7 = ISO certificates, Secure Boot disabled)
+2. **Install NixOS** with lanzaboote + TPM modules (Secure Boot still disabled)
+3. **Reboot** into installed system (PCR 7 = lanzaboote certificates, Secure Boot disabled)
+4. **Enable Secure Boot** (`sbctl create-keys`, `sbctl enroll-keys --microsoft`)
+5. **Rebuild system** (`nixos-rebuild switch`)
+6. **Reboot** and enable Secure Boot in BIOS (PCR 7 = final production values)
+7. **Enroll TPM** from installed system with Secure Boot enabled (correct PCR 7 values)
 
 ### Safety Checks
 

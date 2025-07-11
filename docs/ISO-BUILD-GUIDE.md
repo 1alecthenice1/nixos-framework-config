@@ -123,11 +123,13 @@ The ISO includes an installation helper script on the desktop:
 - **GUI:** Double-click "Install Framework NixOS" desktop icon
 - **Terminal:** Run `/etc/installer-script.sh`
 
-**⚠️ CRITICAL TPM Warning:**
+**⚠️ CRITICAL TPM and Secure Boot Warning:**
 - DO NOT enroll TPM from the live ISO
-- TPM enrollment must be done from the installed system after reboot
-- PCR 7 values differ between ISO and installed system
-- Ignoring this will prevent your system from booting
+- Secure Boot must be disabled during installation
+- Enable Secure Boot AFTER installation but BEFORE TPM enrollment  
+- TPM enrollment must be done from installed system with Secure Boot enabled
+- PCR 7 values differ between ISO, installed system without Secure Boot, and installed system with Secure Boot
+- Following wrong sequence will prevent your system from booting
 
 ## 🔧 Customizing the ISO
 

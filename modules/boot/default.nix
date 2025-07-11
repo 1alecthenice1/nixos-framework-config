@@ -7,6 +7,8 @@
   boot.loader.efi.canTouchEfiVariables = true;
   
   # Enable lanzaboote for Secure Boot
+  # NOTE: Secure Boot should be enabled AFTER initial installation
+  # and BEFORE TPM enrollment for correct PCR 7 values
   boot.lanzaboote = {
     enable = true;
     pkiBundle = "/var/lib/sbctl";
