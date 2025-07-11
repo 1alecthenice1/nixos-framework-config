@@ -16,14 +16,15 @@
     displayManager.lightdm.enable = true;
   };
 
-  # Root user - set both passwords to "root"
+  # Root user - use only ONE password method, null out all others
   users.users.root = {
+    # Use only password for ISO (simplest for installation)
     password = "root";
-    initialPassword = "root";
-    # Clear the conflicting options
+    # Explicitly null out all other password options
     hashedPassword = lib.mkForce null;
     hashedPasswordFile = lib.mkForce null;
     initialHashedPassword = lib.mkForce null;
+    initialPassword = lib.mkForce null;
   };
 
   # Installation tools
