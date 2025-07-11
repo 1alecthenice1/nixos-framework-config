@@ -1,0 +1,48 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 20
+    commands:
+      - echo "Installing Nix..."
+      - curl -L https://nixos.org/nix/install | sh -s -- --daemon
+      - . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+      - echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+      - echo "allowed-unfree = true" >> /etc/nix/nix.conf
+      - nix --version
+      
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on `date`"
+      - df -h
+      - echo "Available memory:"
+      - free -h
+      
+  build:
+    commands:
+      - echo "Build started on `date`"
+      - echo "Building Framework NixOS ISO..."
+      - nix build .#nixosConfigurations.framework-iso.config.system.build.isoImage --print-build-logs
+      - echo "Build completed on `date`"
+      
+  post_build:
+    commands:
+      - echo "Post-build phase started on `date`"
+      - ls -la result/
+      - ISO_FILE=$(find result -name "*.iso" | head -1)
+      - ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
+      - echo "ISO built successfully:"
+      - echo "  File: $ISO_FILE"
+      - echo "  Size: $ISO_SIZE"
+      - df -h
+
+artifacts:
+  files:
+    - result/*.iso
+  name: framework-nixos-iso
+  base-directory: '.'
+
+cache:
+  paths:
+    - '/nix/store/**/*'
