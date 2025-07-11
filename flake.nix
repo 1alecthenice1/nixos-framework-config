@@ -53,6 +53,24 @@
             home-manager.nixosModules.home-manager
           ];
         };
+        
+        framework-iso = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            nixos-hardware.nixosModules.framework-13-7040-amd
+            ./hosts/iso/configuration.nix
+            ./modules/security
+            ./modules/users
+            ./modules/tpm
+            ./modules/desktop
+            ./modules/networking
+            ./modules/hardware
+            ./modules/zram
+            hyprland.nixosModules.default
+            home-manager.nixosModules.home-manager
+            # Note: ISO doesn't need lanzaboote or disko
+          ];
+        };
       };
 
       diskoConfigurations = {
