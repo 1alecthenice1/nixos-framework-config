@@ -277,7 +277,7 @@ Your Framework NixOS configuration is now complete and ready for deployment.
 ```bash
 # 1. Boot from NixOS installer
 # 2. Clone this repository
-git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+git clone https://github.com/1alecthenice1/nixos-framework-config
 cd YOUR_REPO_NAME
 
 # 3. Partition and install

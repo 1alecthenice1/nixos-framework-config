@@ -54,7 +54,7 @@ Boot your Framework laptop with NixOS installation media.
 
 ## Step 2: Clone Configuration
 ```bash
-git clone <your-repo-url> /mnt/nixos-config
+git clone https://github.com/1alecthenice1/nixos-framework-config /mnt/nixos-config
 cd /mnt/nixos-config
 ```
 
