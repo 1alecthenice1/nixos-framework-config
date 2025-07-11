@@ -1,4 +1,4 @@
-#!/bin/bash
+ the#!/bin/bash
 # Build Framework NixOS ISO locally
 # This script builds the same ISO that GitHub Actions will create
 

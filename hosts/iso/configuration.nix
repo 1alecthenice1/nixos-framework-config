@@ -38,11 +38,7 @@
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
     # Allow unfree packages for the ISO
-    allowed-unfree = [
-      "nvidia-x11"
-      "nvidia-settings" 
-      "nvidia-persistenced"
-    ];
+    allowUnfree = true;
   };
   
   # Allow unfree packages globally for installer
