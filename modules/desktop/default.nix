@@ -40,7 +40,7 @@
     thunderbird
     
     # File management
-    nautilus thunar
+    nautilus xfce.thunar
     ranger nnn
     
     # Media
@@ -78,12 +78,13 @@
   # Fonts for better desktop experience
   fonts.packages = with pkgs; [
     noto-fonts
-    noto-fonts-cjk
+    noto-fonts-cjk-sans
     noto-fonts-emoji
     font-awesome
-    (nerdfonts.override { 
-      fonts = [ "FiraCode" "DroidSansMono" "JetBrainsMono" "Iosevka" ];
-    })
+    nerd-fonts.fira-code
+    nerd-fonts.droid-sans-mono
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.iosevka
   ];
 
   # Session variables

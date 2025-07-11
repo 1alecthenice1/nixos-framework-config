@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: {
-  users.almass.alma = {
+  users.users.alma = {
     isNormalUser = true;
     description = "alec";
     extraGroups = [ "wheel" "networkmanager" ];
@@ -9,6 +9,6 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.almas = import ./home.nix;
+    users.alma = import ./home.nix;
   };
 }

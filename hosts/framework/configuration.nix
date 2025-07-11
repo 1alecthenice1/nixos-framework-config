@@ -16,6 +16,9 @@
   time.timeZone = "America/New_York";  # Update this if needed
   i18n.defaultLocale = "en_US.UTF-8";
   
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+  
   # Enable flakes and optimizations
   nix = {
     settings = {

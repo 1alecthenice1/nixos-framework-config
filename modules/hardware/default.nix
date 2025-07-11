@@ -8,8 +8,7 @@
     enable32Bit = true;
     extraPackages = with pkgs; [
       amdvlk
-      rocm-opencl-icd
-      rocm-opencl-runtime
+      rocmPackages.clr.icd
     ];
     extraPackages32 = with pkgs; [
       driversi686Linux.amdvlk
@@ -52,7 +51,7 @@
   };
   
   # Webcam and media support
-  hardware.camera.enable = true;
+  # Camera access is handled by PipeWire and user permissions
   
   # USB and Thunderbolt
   services.udev.packages = with pkgs; [
@@ -81,7 +80,6 @@
     
     # Temperature and fan control
     lm_sensors
-    fancontrol
     
     # Battery management
     acpi
