@@ -16,12 +16,13 @@
     displayManager.lightdm.enable = true;
   };
 
-  # Root user - only set one password option
+  # Root user - set both passwords to "root"
   users.users.root = {
-    # Use only password for ISO (easier for installation)
-    password = "nixos";
-    # Remove conflicting options
+    password = "root";
+    initialPassword = "root";
+    # Clear the conflicting options
     hashedPassword = lib.mkForce null;
+    hashedPasswordFile = lib.mkForce null;
     initialHashedPassword = lib.mkForce null;
   };
 
