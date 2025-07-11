@@ -37,8 +37,6 @@
   # Enable flakes
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
-    # Allow unfree packages for the ISO
-    allowUnfree = true;
   };
   
   # Allow unfree packages globally for installer
