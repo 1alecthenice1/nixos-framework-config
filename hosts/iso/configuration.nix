@@ -3,14 +3,11 @@
     # Include the ISO image module
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
     
-    # Add our custom modules (excluding TPM for ISO)
+    # Add minimal modules for ISO (excluding heavy desktop components)
     ../../modules/security
-    ../../modules/users
-    # Skip TPM module for ISO - PCR values will be different
-    ../../modules/desktop
     ../../modules/networking
     ../../modules/hardware
-    ../../modules/zram
+    # Skip TPM, desktop, users, and zram modules for minimal ISO
   ];
 
   # ISO specific configuration
@@ -42,28 +39,24 @@
   # Allow unfree packages globally for installer
   nixpkgs.config.allowUnfree = true;
 
-  # Essential packages for Framework installation
+  # Essential packages for Framework installation (minimal set)
   environment.systemPackages = with pkgs; [
     # Basic utilities
-    git curl wget vim nano htop tree
-    tmux screen
+    git curl wget vim nano
     
     # Network tools
-    networkmanager iw
+    networkmanager
     
-    # Disk management
-    gparted
+    # Disk management (CLI only)
     cryptsetup
     btrfs-progs
     dosfstools
     
     # Hardware utilities
     lshw usbutils pciutils
-    dmidecode
     
     # TPM tools
     tpm2-tools
-    tpm2-tss
     
     # Framework specific
     fwupd
@@ -73,18 +66,10 @@
     
     # Installation helpers
     nixos-install-tools
-    
-    # Text editors
-    neovim
-    
-    # Web browser for documentation
-    firefox
-    
-    # File manager
-    pcmanfm
   ];
 
-  # Enable SSH for remote installation
+  # Minimal console-based installer (no desktop environment to save space)
+  # Enable SSH for remote installation if needed
   services.openssh = {
     enable = true;
     settings = {
@@ -96,11 +81,11 @@
   # Set root password for SSH access
   users.users.root.password = lib.mkForce "nixos";
   
-  # Add installer user
+  # Add installer user (console only)
   users.users.installer = {
     isNormalUser = true;
     password = "installer";
-    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
+    extraGroups = [ "wheel" "networkmanager" ];
     shell = pkgs.bash;
   };
 
@@ -110,32 +95,6 @@
   # Enable NetworkManager for WiFi setup
   networking.networkmanager.enable = true;
   networking.wireless.enable = false;  # Disable wpa_supplicant
-
-  # Enable audio for desktop environment
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
-  # Enable X11 and desktop environment for easier installation
-  services.xserver = {
-    enable = true;
-    displayManager.lightdm.enable = true;
-    desktopManager.xfce.enable = true;
-  };
-
-  # Enable libinput for touchpad support
-  services.libinput.enable = true;
-
-  # Auto-login to desktop
-  services.displayManager.autoLogin = {
-    enable = true;
-    user = "installer";
-  };
 
   # Framework hardware optimizations for the ISO
   boot.kernelPackages = pkgs.linuxPackages_latest;

@@ -23,6 +23,23 @@ jobs:
     
     - uses: DeterminateSystems/magic-nix-cache-action@main
     
+    - name: Free up disk space
+      run: |
+        echo "Available space before cleanup:"
+        df -h
+        # Remove unnecessary packages and files to free up space
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo apt-get remove -y '^dotnet-.*'
+        sudo apt-get remove -y '^llvm-.*'
+        sudo apt-get remove -y 'php.*'
+        sudo apt-get autoremove -y
+        sudo apt-get autoclean
+        echo "Available space after cleanup:"
+        df -h
+    
     - name: Build ISO
       run: |
         nix build .#nixosConfigurations.framework-iso.config.system.build.isoImage
