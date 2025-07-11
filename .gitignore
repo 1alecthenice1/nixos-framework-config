@@ -1,0 +1,10 @@
+result
+result-*
+.direnv/
+*.bak
+*~
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
