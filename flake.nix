@@ -54,9 +54,5 @@
           ];
         };
       };
-
-      diskoConfigurations = {
-        framework = import ./disko/framework-luks-btrfs.nix;
-      };
     };
 }
