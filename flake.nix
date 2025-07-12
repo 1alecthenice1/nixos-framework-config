@@ -46,6 +46,7 @@
             ./modules/desktop
             ./modules/networking
             ./modules/hardware
+            ./modules/development
             ./modules/zram
             lanzaboote.nixosModules.lanzaboote
             disko.nixosModules.disko
