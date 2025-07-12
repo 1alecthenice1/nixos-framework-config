@@ -1,302 +1,170 @@
-# NixOS Framework Configuration
+# NixOS Framework Laptop Configuration
 
-Basic NixOS configuration for Framework Laptop   sudo## Installation with Encryption
+A complete NixOS configuration optimized for Framework laptops with full disk encryption, TPM integration, and Secure Boot support.
 
-⚠️ **CRITICAL**: Follow this EXACT sequence to avoid PCR 7 conflicts that will prevent booting!
+## ⚠️ CRITICAL INSTALLATION WARNING
 
-### Step 1: Boot and Install
-1. **Boot from NixOS installer ISO**
-   ```bash
-   # The ISO has Secure Boot disabled - this is correct for installation
-   ```
+**TPM and Secure Boot configuration MUST follow the exact sequence below or your system will not boot!**
 
-2. **Partition your disk with disko:**
-   ```bash
-   sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko/framework-luks-btrfs.nix
-   ```
+The PCR 7 register values change between installation states. Enrolling TPM at the wrong time will lock you out of your system.
 
-3. **Install NixOS:**
-   ```bash
-   sudo nixos-install --flake .#framework
-   ```
+## 🚀 Installation Guide
 
-### Step 2: Reboot to Installed System
+### Step 1: Boot NixOS Installer ISO
+```bash
+# Boot from standard NixOS installer (Secure Boot DISABLED)
+# This is correct - do NOT enable Secure Boot yet
+```
+
+### Step 2: Install NixOS
+```bash
+# Clone this repository
+git clone https://github.com/YOUR_USERNAME/nixos-framework-config
+cd nixos-framework-config
+
+# Partition disk with LUKS encryption
+sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko/framework-luks-btrfs.nix
+
+# Install NixOS
+sudo nixos-install --flake .#framework
+```
+
+### Step 3: Reboot to Installed System
 ```bash
 sudo reboot
-# Boot into the newly installed system (NOT the ISO)
+# ⚠️ Boot into the INSTALLED system (not the ISO)
+# ⚠️ Secure Boot is still DISABLED - this is correct
 ```
 
-### Step 3: Setup Secure Boot Infrastructure
+### Step 4: Setup Secure Boot (REQUIRED)
 ```bash
-# Run the automated Secure Boot setup script
-sudo ./scripts/setup-secureboot.sh
-```
+# Create and enroll Secure Boot keys
+sudo sbctl create-keys
+sudo sbctl enroll-keys --microsoft
+sudo nixos-rebuild switch
 
-This script will:
-- Create Secure Boot keys
-- Enroll keys (including Microsoft compatibility keys)
-- Rebuild the system with Secure Boot support
-- Prepare for BIOS activation
-
-### Step 4: Enable Secure Boot in BIOS
-```bash
+# Reboot and enable Secure Boot in BIOS
 sudo reboot
+# Press F2 during boot → Security → Enable Secure Boot → Save & Exit
 ```
-1. **Enter BIOS/UEFI** (usually F2 during startup)
-2. **Navigate to Security settings**
-3. **Enable Secure Boot**
-4. **Save and exit**
 
-### Step 5: Verify and Enroll TPM
+### Step 5: Verify Secure Boot, Then Enroll TPM
 ```bash
 # Verify Secure Boot is active
-sudo sbctl status
+sudo sbctl status  # Should show "Secure Boot: Enabled"
 
-# Now enroll TPM with correct PCR 7 values
+# ⚠️ ONLY NOW enroll TPM (after Secure Boot is enabled)
 sudo ./scripts/tpm-enroll.sh
 ```
 
-### Step 6: Test TPM Unlock
+### Step 6: Test Automatic Unlock
 ```bash
 sudo reboot
 # System should unlock automatically with TPM
-# If not, use your LUKS password and check the logs
-```--flake .#framework
-   ```
-4. **Reboot and setup Secure Boot:**
-   ```bash
-   sudo reboot
-   # After reboot:
-   sudo ./scripts/setup-secureboot.sh
-   # Enable Secure Boot in BIOS, then:
-   sudo ./scripts/tpm-enroll.sh
-   ```
+# If not, use your LUKS password and re-enroll
+```
 
-## Security Notes & Warnings
+## ��️ Critical Security Notes
 
-### ⚠️ CRITICAL SEQUENCE REQUIREMENTS
-- **NEVER enroll TPM from the live ISO** - PCR 7 values will be wrong
-- **NEVER enroll TPM before enabling Secure Boot** - PCR 7 values will change
-- **ALWAYS follow the exact 6-step sequence above** - skipping steps breaks boot
-- **Enable Secure Boot in BIOS BEFORE TPM enrollment** - final PCR 7 values needed
+### **Why This Sequence Matters**
+The TPM PCR 7 register contains measurements of the boot process:
+- **ISO boot**: Different PCR 7 values (temporary state)
+- **Installed system**: Different PCR 7 values (intermediate state)  
+- **Secure Boot enabled**: Final PCR 7 values (target state)
 
-### 🔐 Security Best Practices
-- **Always keep your LUKS password** - TPM can fail during updates or hardware changes
-- **Test TPM unlock after enrollment** - verify it works before relying on it
-- **Backup LUKS headers before major changes** - allows recovery if TPM fails
-- **Understand the 3-stage boot process** - ISO → Installed → Secure Boot enabled
+**TPM only unlocks if current PCR 7 matches enrollment PCR 7!**
 
-### �️ Troubleshooting
-- **System won't boot after TPM enrollment**: Use LUKS password, re-enroll TPM
-- **TPM enrollment fails**: Check Secure Boot status with `sudo sbctl status`  
-- **Secure Boot shows disabled**: Re-run setup-secureboot.sh and enable in BIOS
-- **Boot takes long time**: Normal during first boot with new keys
+### **Common Mistakes That Break Boot:**
+- ❌ Enrolling TPM from the live ISO
+- ❌ Enrolling TPM before enabling Secure Boot
+- ❌ Skipping the Secure Boot setup step
+- ❌ Not rebooting between steps
 
-### 📚 Why This Sequence Matters
-The **PCR 7 register** contains measurements of the boot process. Different boot states create different PCR 7 values:
+### **Recovery:**
+If system won't boot after TPM enrollment:
+1. Use your LUKS password to unlock manually
+2. Check Secure Boot status: `sudo sbctl status`
+3. Re-enroll TPM: `sudo ./scripts/tpm-enroll.sh`
 
-1. **ISO boot**: PCR 7 = ISO certificates (temporary)
-2. **Installed system without Secure Boot**: PCR 7 = lanzaboote without Secure Boot 
-3. **Installed system with Secure Boot**: PCR 7 = lanzaboote + Secure Boot (final)
-
-TPM will **only unlock** if current PCR 7 matches enrollment PCR 7. Enrolling in wrong state = **system won't boot**.series.
-
-## Status: Production Ready! 🚀
-
-This is a minimal, working NixOS configuration that includes:
-
-- 🏠 Basic Framework hardware support
-- 👤 User configuration for alma
-- 🔒 Basic security settings
-- 📦 Essential packages
-
-## Configuration Details
-
-- **Username:** alma
-- **Full Name:** alec  
-- **Email:** aleckillian44@proton.me
-- **GitHub:** 1alecthenice1
-- **Timezone:** America/New_York
-
-## Next Steps
-
-1. **Test the configuration:**
-   ```bash
-   nix flake check
-   nix build .#nixosConfigurations.framework.config.system.build.toplevel
-   ```
-
-2. **Test in a VM:**
-   ```bash
-   nix build .#nixosConfigurations.framework.config.system.build.vm
-   ./result/bin/run-*-vm
-   ```
-
-3. **Add more features incrementally:**
-   - TPM encryption
-   - Secure Boot
-   - Desktop environment
-   - Advanced partitioning
-
-## Installation
-
-This is a basic configuration. For actual installation, you'll need to:
-1. Boot from NixOS installer
-2. Partition your disk manually
-3. Generate hardware-configuration.nix
-4. Install with this flake
-
-## Development
-
-This repository is set up for incremental development. You can safely:
-- Add new modules in `modules/`
-- Extend the flake with additional inputs
-- Test changes in VMs before installation
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## 🔐 Encryption Features Added
-
-This configuration now includes:
-
-- 🔒 **LUKS disk encryption** with btrfs subvolumes
-- 🛡️ **TPM 2.0 support** for hardware-backed encryption
-- 🔐 **Secure Boot** support with lanzaboote
-- 📦 **Declarative partitioning** with disko
-- ⚡ **Optimized boot** configuration
-
-## Installation with Encryption
-
-1. **Boot from NixOS installer**
-2. **Partition with disko:**
-   ```bash
-   sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko/framework-luks-btrfs.nix
-   ```
-3. **Install NixOS:**
-   ```bash
-   sudo nixos-install --flake .#framework
-   ```
-4. **After reboot, enroll TPM:**
-   ```bash
-   sudo ./scripts/tpm-enroll.sh
-   ```
-
-## Security Notes
-
-- ⚠️ **Always keep your LUKS password** - TPM can fail
-- 🔄 **Test TPM unlock** before relying on it
-- 💾 **Backup LUKS headers** before major changes
-- 🛡️ **Secure Boot** requires additional BIOS setup
-
-
-## 🖥️ Desktop Environment Features
-
-This configuration now includes a complete desktop environment:
+## 🖥️ What's Included
 
 ### **Desktop Environment**
-- 🌊 **Hyprland** - Modern Wayland compositor
-- 🎨 **Waybar** - Beautiful status bar
-- 🔔 **Dunst** - Notification daemon
-- 🚀 **Rofi** - Application launcher
-- 🔒 **Swaylock** - Screen locker
+- **Hyprland** - Modern Wayland compositor
+- **Waybar** - Status bar with system info
+- **Rofi** - Application launcher
+- **Firefox, VSCode, Discord** - Essential applications
 
-### **Applications**
-- 🌐 **Firefox & Chromium** - Web browsers
-- 💬 **Discord, Telegram** - Communication
-- 🎵 **Spotify, VLC** - Media players
-- 📝 **VSCode, LibreOffice** - Productivity
-- 🗂️ **Nautilus** - File manager
+### **Security Features**
+- **LUKS full disk encryption** with TPM unlock
+- **Secure Boot** with lanzaboote
+- **Firewall** and security hardening
+- **Automatic updates** and maintenance
 
-### **Networking & Hardware**
-- 📡 **NetworkManager** - GUI network management
-- 🔵 **Bluetooth** - Full BT support with Blueman
-- 🖨️ **Printing** - CUPS with common drivers
-- 📹 **Webcam** - Camera support
-- 🔊 **PipeWire** - Low-latency audio
+### **Framework Hardware Support**
+- **Power management** optimized for Framework
+- **Function keys** and hardware controls
+- **Firmware updates** with fwupd
+- **All ports and expansion cards** supported
 
-### **Hardware Optimization**
-- ⚡ **Framework-specific** optimizations
-- 🎮 **AMD GPU** acceleration
-- 🐳 **Docker & VMs** - Development ready
-- 🔧 **Framework tools** - EC control, firmware updates
+### **Memory Optimization (64GB RAM)**
+- **Zram** for emergency swap
+- **Low swappiness** - prefer RAM over swap
+- **Optimized memory management**
 
-### **Memory Management (64GB Optimized)**
-- 💾 **25% zram swap** (16GB) - Emergency swap
-- 🚀 **Low swappiness** (5) - Prefer RAM
-- ⚡ **Optimized dirty ratios** - Better performance
-- 📊 **Memory monitoring** - Hourly reports
+## 📋 System Details
 
-## Quick Start Commands
+- **User:** alma (admin user with sudo access)
+- **Shell:** Bash with useful aliases
+- **Partition:** Encrypted Btrfs with subvolumes
+- **Boot:** UEFI with Secure Boot support
+- **TPM:** Hardware-backed disk encryption
+
+## 🔧 Daily Usage Commands
 
 ```bash
 # System management
-rebuild          # Rebuild system
-update           # Update system  
+rebuild          # Rebuild and switch configuration
+update           # Update system and packages
 clean            # Clean old generations
 
-# Hardware info
-hardware-info    # System hardware details
+# Hardware monitoring  
+hardware-info    # System information
 battery-info     # Battery status
-temp-check       # Temperature sensors
+temp-check       # Temperature monitoring
 
-# Screenshots
-Super + Print    # Area screenshot to clipboard
-
-# Window management
-Super + Q        # Terminal
-Super + R        # App launcher
+# Window management (Hyprland)
+Super + Q        # Open terminal
+Super + R        # Application launcher  
 Super + E        # File manager
 Super + 1-5      # Switch workspaces
 ```
 
-## Performance Notes
-
-- **Memory**: Optimized for 64GB RAM with minimal swapping
-- **Graphics**: Hardware acceleration enabled for AMD GPU
-- **Audio**: Low-latency PipeWire configuration
-- **Power**: Framework-specific power management
-- **Storage**: Btrfs with compression and optimized mount options
-
-
-## 👤 User Configuration
-
-**System configured for:**
-- **Username:** users
-- **Full Name:** alec
-- **Email:** aleckillian44@proton.me
-- **Timezone:** America/New_York
-
-## 🚀 Ready for Installation!
-
-Your Framework NixOS configuration is now complete and ready for deployment.
-
-### Quick Installation Commands:
+## 🧪 Testing Before Installation
 
 ```bash
-# 1. Boot from NixOS installer
-# 2. Clone this repository
-git clone https://github.com/1alecthenice1/nixos-framework-config
-cd YOUR_REPO_NAME
+# Test configuration validity
+nix flake check
 
-# 3. Partition and install
-sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko ./disko/framework-luks-btrfs.nix
-sudo nixos-install --flake .#framework
-
-# 4. Reboot and enroll TPM (optional)
-sudo ./scripts/tpm-enroll.sh
-
-# 5. Check system status
-./scripts/system-info.sh
+# Build ISO for testing
+nix build .#nixosConfigurations.framework-iso.config.system.build.isoImage
 ```
 
-## 🎉 What You'll Get
+## ⚠️ Important Notes
 
-- **Secure:** TPM + LUKS + Secure Boot
-- **Fast:** Optimized for 64GB RAM with zram
-- **Complete:** Full desktop environment with all applications
-- **Framework-optimized:** All hardware features supported
-- **User-friendly:** Hyprland with intuitive keybindings
+- **Always keep your LUKS password** - TPM can fail during updates
+- **Test TPM unlock after enrollment** - ensure it works reliably  
+- **Backup LUKS headers** before major system changes
+- **Secure Boot must be enabled** for TPM enrollment to work
+- **Follow the exact sequence** - skipping steps will break boot
 
-Welcome to your new Framework NixOS system! 🎊
+## 🆘 Support
+
+If you encounter issues:
+1. Check that Secure Boot is enabled: `sudo sbctl status`
+2. Verify TPM is working: `sudo systemd-cryptenroll --tpm2-device=list`
+3. Re-enroll TPM if needed: `sudo ./scripts/tpm-enroll.sh`
+4. Use LUKS password as backup if TPM fails
+
+---
+
+**Remember: The exact installation sequence is critical for TPM + Secure Boot to work correctly!**
