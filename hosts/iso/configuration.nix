@@ -78,9 +78,11 @@
     };
   };
 
-  # Set root password for SSH access
-  users.users.root.initialPassword = lib.mkForce "nixos";
-  
+  users.users.root = {
+    initialPassword = lib.mkForce "nixos";
+    initialHashedPassword = lib.mkForce null;
+  };
+
   # Add installer user (console only)
   users.users.installer = {
     isNormalUser = true;
