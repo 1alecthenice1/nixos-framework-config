@@ -10,4 +10,4 @@ buildspec.yml
 *aws*
 *terraform*
 *codebuild*
-.github/workflows/
+.github/
