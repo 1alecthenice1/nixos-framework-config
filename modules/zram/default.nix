@@ -1,7 +1,7 @@
-{ lib, bootUUID ? "4C1D-B315", ... }:
+{ lib, frameworkLayout, ... }:
 
 {
-  disko.devices = import ./framework-layout.nix;
+  disko.devices = frameworkLayout;
 
   fileSystems = {
     "/" = lib.mkForce {
@@ -11,7 +11,7 @@
     };
 
     "/boot" = lib.mkForce {
-      device = "/dev/disk/by-uuid/${bootUUID}";
+      device = "/dev/disk/by-uuid/4C1D-B315";
       fsType = "vfat";
     };
   };

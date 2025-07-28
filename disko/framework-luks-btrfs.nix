@@ -1,6 +1,8 @@
+{ lib, ... }:
+
 {
-  disk = {
-    main = {
+  disko.devices = {
+    disk.main = {
       type = "disk";
       device = "/dev/nvme0n1";
       content = {
@@ -13,13 +15,10 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "defaults" "umask=0077" ];
-              postMountHook = ''
-                # mkForce in hardware-configuration to prevent conflict
-                echo "Ensure hardware-configuration.nix uses mkForce for /boot"
-              '';
+              mountOptions = [ "umask=0077" ];
             };
           };
+
           luks = {
             size = "100%";
             content = {
@@ -31,7 +30,7 @@
               };
               content = {
                 type = "btrfs";
-                extraArgs = [ "-L" "nixos" "-f" ];
+                extraArgs = [ "-f" ];
                 subvolumes = {
                   "/root" = {
                     mountpoint = "/";
@@ -45,6 +44,10 @@
                     mountpoint = "/nix";
                     mountOptions = [ "subvol=nix" "compress=zstd" "noatime" ];
                   };
+                  "/persist" = {
+                    mountpoint = "/persist";
+                    mountOptions = [ "subvol=persist" "compress=zstd" "noatime" ];
+                  };
                 };
               };
             };
@@ -52,6 +55,8 @@
         };
       };
     };
+
+    luksDevices.cryptroot.device = "/dev/disk/by-partlabel/luks";
   };
 }
 

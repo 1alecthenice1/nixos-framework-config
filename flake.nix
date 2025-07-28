@@ -32,11 +32,19 @@
     in {
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit hyprland; };
+        specialArgs = {
+          inherit hyprland;
+        };
+
         modules = [
+          # Hardware-specific
           nixos-hardware.nixosModules.framework-13-7040-amd
+
+          # Your own configs
           ./hosts/framework/configuration.nix
           ./hosts/framework/hardware-configuration.nix
+
+          # Modular imports
           ./modules/security
           ./modules/users
           ./modules/tpm
@@ -45,12 +53,18 @@
           ./modules/networking
           ./modules/hardware
           ./modules/zram
+
+          # Disko & Boot
           lanzaboote.nixosModules.lanzaboote
           disko.nixosModules.disko
+
+          # Desktop
           hyprland.nixosModules.default
+
+          # Home Manager
           home-manager.nixosModules.home-manager
 
-          # Disko layout inline
+          # Disk layout
           ({ lib, ... }: {
             disko.devices = import ./disko/framework-luks-btrfs.nix;
           })
